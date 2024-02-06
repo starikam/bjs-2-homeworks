@@ -2,36 +2,26 @@ class AlarmClock {
 	constructor() {
 		this.alarmCollection = [];
 		this.intervalId = null;
+		this.regularTime = /^(?:0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/;
 	}
 
 	addClock(time, func) {
-		let item = {
-			time: time,
-			callback: func,
-			canCall: true
-		};
-
-		if (typeof(func) != 'function' || time === undefined || time == "") {
+		
+		if (typeof(func) != 'function' || !this.regularTime.test(time)) {
 			throw new Error("Отсутствуют обязательные аргументы");
 		}
 
-		let searchTime = time;
-		let haveTime = this.alarmCollection.find(city => city.time === searchTime)
+		let haveTime = this.alarmCollection.find(alarms => alarms.time === time)
 		if (haveTime) {
 			console.warn('Уже присутствует звонок на это же время');
 		};
 
-		this.alarmCollection.push(item);
-
+		this.alarmCollection.push({time: time, callback: func, canCall: true});
 	}
 
 	removeClock(time) {
 
-		if (time === undefined) {
-			return 0;
-		};
-
-		this.alarmCollection = this.alarmCollection.filter(value => value.time > time);
+		this.alarmCollection = this.alarmCollection.filter(value => value.time != time);
 	}
 
 	getCurrentFormattedTime() {
@@ -45,19 +35,20 @@ class AlarmClock {
 
 	start() {
 		if (this.intervalId) {
-			return 0;
+			return;
 		}
+		
+		this.intervalId = setInterval(() => 
 		this.alarmCollection.forEach((alarm) => {
 			if (alarm.time === this.getCurrentFormattedTime() & alarm.canCall === true) {
 				alarm.canCall = false;
-				this.intervalId = alarm.callback();
-				console.log(alarm);
+				alarm.callback();
 			}
-		})
+		}), 1000);
 	}
 
 	stop() {
-		clearInterval();
+		clearInterval(this.intervalId);
 		this.intervalId = null;
 	}
 
@@ -74,15 +65,16 @@ class AlarmClock {
 }
 
 let phoneAlarm = new AlarmClock();
-phoneAlarm.addClock("09:00", function Print() {
-	console.log("1")
+phoneAlarm.addClock("09:00", () => {
+	return 1;
 });
-phoneAlarm.addClock("22:03", function Print() {
-	console.log("1")
+phoneAlarm.addClock("12:47", () => {
+	return 2;
 });
-phoneAlarm.addClock("09:02", function Print() {
-	console.log("1")
+phoneAlarm.addClock("09:02", () => {
+	return 3;
 });
 
 phoneAlarm.getCurrentFormattedTime();
 phoneAlarm.removeClock();
+phoneAlarm.start();
